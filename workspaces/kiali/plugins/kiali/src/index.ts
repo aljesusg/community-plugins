@@ -1,1 +1,1 @@
-export { kialiPlugin, KialiPage } from './plugin';
+export { kialiPlugin, KialiGraphCard } from './plugin';

@@ -1,12 +1,12 @@
 import React from 'react';
 import { createDevApp } from '@backstage/dev-utils';
-import { kialiPlugin, KialiPage } from '../src/plugin';
+import { kialiPlugin, KialiGraphCard } from '../src/plugin';
 
 createDevApp()
   .registerPlugin(kialiPlugin)
   .addPage({
-    element: <KialiPage />,
-    title: 'Root Page',
-    path: '/kiali',
+    element: <KialiGraphCard />,
+    title: 'Kiali Graph',
+    path: '/graph',
   })
   .render();

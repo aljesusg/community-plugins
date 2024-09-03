@@ -15,7 +15,9 @@ PROJECT_BS_DIR=backstage
 mkdir $PROJECT_BS_DIR
 cd $PROJECT_BS_DIR
 BS_PATH=$(pwd)
-# Create the backstage app
+# Clone backstage repo
+git clone https://github.com/backstage/backstage.git
+# Create the backstage app with latest release
 npx @backstage/create-app@latest
 cd backstage
 # Add the kiali plugin
