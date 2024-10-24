@@ -21,16 +21,34 @@ export interface Config {
        * The base url of the kiali installation.
        * @visibility frontend
        */
-      baseUrl: string;  
+      url: string;  
       /**
-       * Service Account Token which is used for querying data from Kiali
-       * @visibility secret
+       * The url of the Kiali standalone for external access.
+       * @visibility frontend
        */
+      urlExternal?: string;
+      /**
+           * Service Account Token which is used for querying data from Kiali
+           * @visibility secret
+           */
       serviceAccountToken?: string;
       /**
-       * Skip TLS certificate verification presented by the API server, defaults to false
-       * @visibility secret
-       */
+        * Skip TLS certificate verification presented by the API server, defaults to false
+        */
       skipTLSVerify?: boolean;
+      /**
+        * Base64-encoded certificate authority bundle in PEM format.
+        * @visibility secret
+        */
+      caData?: string;
+      /**
+        * Filesystem path (on the host where the Backstage process is running) to a certificate authority bundle in PEM format
+        * @visibility secret
+        */
+      caFile?: string;
+      /**
+        * Time in seconds that session is enabled, defaults to 1 minute.
+        */
+      sessionTime?: number;
     };
   }

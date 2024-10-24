@@ -1,8 +1,9 @@
-import type { DiscoveryApi, FetchApi } from '@backstage/core-plugin-api';
+import type { DiscoveryApi, FetchApi, IdentityApi } from '@backstage/core-plugin-api';
 import crossFetch from 'cross-fetch';
-import { KialiApiClient, TypedResponse } from "./kialiApi";
-import { HealthResponse } from '../types';
-import { graphRequest } from '../request/graphRequest';
+import {  GraphElementsRequest } from '../request/graphRequest';
+import { pluginId } from '../pluginId';
+import { GraphDefinition } from '../types';
+import { KialiApiClient, TypedResponse } from './kialiApi';
 
 /** @public */
 export type KialiApi = Omit<
@@ -14,31 +15,32 @@ export class KialiApiClientProxy implements KialiApi {
     private readonly discoveryApi: DiscoveryApi;
     private readonly fetchApi: FetchApi;
     private readonly defaultClient: KialiApiClient;
-    private token?: string; 
+    private readonly identityApi: IdentityApi;
 
-    constructor(options: { discoveryApi: DiscoveryApi; fetchApi?: FetchApi }) {
+    constructor(options: { discoveryApi: DiscoveryApi; fetchApi?: FetchApi, identityApi: IdentityApi }) {
         this.defaultClient = new KialiApiClient({
           fetchApi: options.fetchApi,
           discoveryApi: {
             async getBaseUrl() {
-              const baseUrl = await options.discoveryApi.getBaseUrl('proxy');
-              return `${baseUrl}/kiali`;
+              const baseUrl = await options.discoveryApi.getBaseUrl(pluginId);
+              return baseUrl;
             },
           },
+          identityApi: options.identityApi
         });
         this.discoveryApi = options.discoveryApi;
         this.fetchApi = options.fetchApi ?? { fetch: crossFetch };
+        this.identityApi = options.identityApi;
     }
 
-    public async getHealth(request: graphRequest): Promise<TypedResponse<HealthResponse>> {
-        const response = await this.getHealth(request);
-
+    public async getGraphElements(request: GraphElementsRequest): Promise<TypedResponse<GraphDefinition>> {
+        const response = await this.defaultClient.getGraphElements(request)
         return {
-            ...response,
-            json: async () => {
-                const data = await response.json();                
-                return data;
-              },
-        }
+          ...response,
+          json: async () => {
+              const data = await response.json();                
+              return data;
+            },
+      }
     }
 }

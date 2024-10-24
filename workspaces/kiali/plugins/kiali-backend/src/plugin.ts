@@ -3,6 +3,7 @@ import {
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
 import { createRouter } from './service/router';
+import { pluginId } from '@backstage-community/plugin-kiali-common/src/pluginId';
 
 /**
  * kialiPlugin backend plugin
@@ -10,7 +11,7 @@ import { createRouter } from './service/router';
  * @public
  */
 export const kialiPlugin = createBackendPlugin({
-  pluginId: 'kiali',
+  pluginId: pluginId,
   register(env) {
     env.registerInit({
       deps: {

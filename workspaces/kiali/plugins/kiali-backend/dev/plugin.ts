@@ -1,0 +1,40 @@
+import {
+  coreServices,
+  createBackendPlugin,
+} from '@backstage/backend-plugin-api';
+import { createRouter } from '../src/service/router';
+import { pluginId } from '@backstage-community/plugin-kiali-common/src/pluginId';
+
+/**
+ * kialiPlugin backend plugin
+ *
+ * @public
+ */
+export const kialiPlugin = createBackendPlugin({
+  pluginId: pluginId,
+  register(env) {
+    env.registerInit({
+      deps: {
+        httpRouter: coreServices.httpRouter,
+        logger: coreServices.logger,
+        config: coreServices.rootConfig,
+      },
+      async init({
+        httpRouter,
+        logger,
+        config,
+      }) {
+        httpRouter.use(
+          await createRouter({
+            logger,
+            config,
+          }, true),
+        );
+        httpRouter.addAuthPolicy({
+          path: '/graph',
+          allow: 'unauthenticated',
+        });
+      },
+    });
+  },
+});

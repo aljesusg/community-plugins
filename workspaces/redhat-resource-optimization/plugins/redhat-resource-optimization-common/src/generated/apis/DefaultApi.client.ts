@@ -61,6 +61,7 @@ export class DefaultApiClient {
       };
       query: {
         memoryUnit?: 'bytes' | 'MiB' | 'GiB';
+          
         cpuUnit?: 'millicores' | 'cores';
       };
     },

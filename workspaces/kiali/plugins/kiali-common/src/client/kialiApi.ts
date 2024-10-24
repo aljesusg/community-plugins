@@ -1,9 +1,13 @@
 import { pluginId } from "../pluginId";
-import { HealthResponse } from "../types";
-import type { DiscoveryApi, FetchApi } from '@backstage/core-plugin-api';
+import { GraphDefinition } from "../types";
+import type { DiscoveryApi, IdentityApi, FetchApi } from '@backstage/core-plugin-api';
 import crossFetch from 'cross-fetch';
 import * as parser from 'uri-template';
-import { graphRequest } from "../request/graphRequest";
+import { GraphElementsRequest } from "../request/graphRequest";
+import { StatusState } from "@backstage-community/plugin-kiali-react/src/types/StatusState";
+import { BackstageRequest } from "../request";
+import { ServerConfig } from "@backstage-community/plugin-kiali-react/src/types/ServerConfig";
+
 
 /**
  * Wraps the Response type to convey a type on the json call.
@@ -26,34 +30,57 @@ export interface RequestOptions {
  * no description
  * @public
  */
-export class KialiApiClient {
+export class KialiApiClient {    
     private readonly discoveryApi: DiscoveryApi;
     private readonly fetchApi: FetchApi;
-    
+    private readonly identityApi: IdentityApi;
     
     constructor(options: {
-      discoveryApi: { getBaseUrl(pluginId: string): Promise<string> };
+      discoveryApi: { getBaseUrl(pluginId: string): Promise<string> };      
       fetchApi?: { fetch: typeof fetch };
+      identityApi: IdentityApi;
     }) {
       this.discoveryApi = options.discoveryApi;
       this.fetchApi = options.fetchApi || { fetch: crossFetch };
+      this.identityApi = options.identityApi;
+    }
+    
+    private getOptions(request: any = undefined):RequestInit {
+     
+      const token = async() => await this.identityApi.getCredentials();
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        method: 'POST',
+        body: request && JSON.stringify({
+          entityRef: request.entityRef,
+          params: request.params
+        })
+      }
     }
 
-    public async getHealth(
-      request: graphRequest,
-      options?: RequestOptions
-    ): Promise<TypedResponse<HealthResponse>> {
+    public async getConfig(): Promise<TypedResponse<ServerConfig>> {
       const baseUrl = await this.discoveryApi.getBaseUrl(pluginId);
-      const uriTemplate = `/health`;
-
+      const uriTemplate = `/config`;
       const uri = parser.parse(uriTemplate).expand({});
+      return await this.fetchApi.fetch(`${baseUrl}${uri}`, this.getOptions());
+    }
 
-      return await this.fetchApi.fetch(`${baseUrl}${uri}`, {
-      headers: {
-          'Content-Type': 'application/json',
-          ...(options?.token && { Authorization: `Bearer ${options?.token}` }),
-      },
-      method: 'GET',
-      });
+    public async getStatus(): Promise<TypedResponse<StatusState>> {
+      const baseUrl = await this.discoveryApi.getBaseUrl(pluginId);
+      const uriTemplate = `/status`;
+      const uri = parser.parse(uriTemplate).expand({});
+      return await this.fetchApi.fetch(`${baseUrl}${uri}`, this.getOptions());
+    }
+
+    public async getGraphElements(
+      request: GraphElementsRequest
+    ): Promise<TypedResponse<GraphDefinition>> {
+      const baseUrl = await this.discoveryApi.getBaseUrl(pluginId);
+      const uriTemplate = `/graph`;
+      const uri = parser.parse(uriTemplate).expand({});
+      return await this.fetchApi.fetch(`${baseUrl}${uri}`, this.getOptions(request));
     }
 }

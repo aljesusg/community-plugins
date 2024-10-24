@@ -1,0 +1,1 @@
+export type HealthAnnotationType = { [key: string]: string };

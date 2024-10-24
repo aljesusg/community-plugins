@@ -5,25 +5,29 @@ import {
   createRoutableExtension,
   discoveryApiRef,
   fetchApiRef,
+  identityApiRef,
 } from '@backstage/core-plugin-api';
 
 import { rootRouteRef } from './routes';
 import { KialiApiClient } from '@backstage-community/plugin-kiali-common';
 import { kialiApiRef } from './apis';
+import { pluginId } from '@backstage-community/plugin-kiali-common/src/pluginId';
 
 export const kialiPlugin = createPlugin({
-  id: 'kiali',
+  id: pluginId,
   apis: [
     createApiFactory({
       api: kialiApiRef,
       deps: {
         discoveryApi: discoveryApiRef,
         fetchApi: fetchApiRef,
+        identityApi: identityApiRef
       },
-      factory({ discoveryApi, fetchApi }) {
+      factory({ discoveryApi, fetchApi, identityApi }) {
         return new KialiApiClient({
           discoveryApi,
           fetchApi,
+          identityApi
         });
       },
     })
