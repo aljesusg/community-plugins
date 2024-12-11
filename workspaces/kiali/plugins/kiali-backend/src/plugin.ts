@@ -30,13 +30,13 @@ export const kialiPlugin = createBackendPlugin({
         config: coreServices.rootConfig,
       },
       async init({ http, logger, config }) {
-        http.use(await createRouter({ logger, config }));
+        http.use(await createRouter({ logger, config }));       
         http.addAuthPolicy({
-          path: '/status',
+          path: '/graph',
           allow: 'unauthenticated',
         });
         http.addAuthPolicy({
-          path: '/proxy',
+          path: '/config',
           allow: 'unauthenticated',
         });
       },

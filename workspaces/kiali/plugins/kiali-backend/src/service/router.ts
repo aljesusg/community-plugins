@@ -18,11 +18,12 @@ import type { LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 
 import express from 'express';
-
-import { KialiApiImpl } from '../clients/KialiAPIConnector';
-import { readKialiConfigs } from './config';
+import Router from 'express-promise-router';
+import { KialiDetails, readKialiConfigs } from './config';
+import { registerConfigRoute, registerGraphRoute } from './routes';
 
 export interface RouterOptions {
+  kialiConfig?: KialiDetails;
   logger: LoggerService;
   config: Config;
 }
@@ -30,40 +31,23 @@ export interface RouterOptions {
 /** @public */
 export async function createRouter(
   options: RouterOptions,
+  mock?: boolean
 ): Promise<express.Router> {
-  const { logger } = options;
-  const { config } = options;
-
-  logger.info('Initializing Kiali backend');
-
-  const kiali = readKialiConfigs(config);
-
-  const kialiAPI = new KialiApiImpl({ logger, kiali });
-
-  const router = express.Router();
-  router.use(express.json());
-
-  // curl -H "Content-type: application/json" -H "Accept: application/json" -X GET localhost:7007/api/kiali/proxy --data '{"endpoint": "api/namespaces"}'
-  router.post('/proxy', async (req, res) => {
-    const endpoint = req.body.endpoint;
-    logger.info(`Call to Kiali ${endpoint}`);
-
-    kialiAPI.proxy(endpoint).then((response: any) => {
-      if (endpoint.includes('api/status')) {
-        // Include kiali external url to status
-        response.status.kialiExternalUrl = kiali.urlExternal;
-      }
-      res.json(response);
-    });
-  });
-
-  router.post('/status', async (_, res) => {
-    logger.info(`Call to Kiali Status`);
-    res.json(await kialiAPI.status());
-  });
-
-  const middleware = MiddlewareFactory.create({ logger, config });
-
-  router.use(middleware.error());
+  const { logger, config } = options;
+  const router = Router();
+  try {
+    /* Kiali configuration */
+    logger.info('Initializing Kiali backend');
+    const kialiConfig = readKialiConfigs(config);    
+    router.use(express.json());
+    /* Routes */
+    registerGraphRoute(router, {...options, kialiConfig: kialiConfig}, mock)    
+    registerConfigRoute(router, {...options, kialiConfig: kialiConfig}, mock)    
+    /* Middleware */
+    const middleware = MiddlewareFactory.create({ logger, config });
+    router.use(middleware.error());
+  }catch(err) {
+    logger.error('[Kiali] Error creating router', err)
+  }
   return router;
 }
