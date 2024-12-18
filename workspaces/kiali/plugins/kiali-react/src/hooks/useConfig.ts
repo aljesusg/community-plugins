@@ -1,8 +1,9 @@
 import { useApi } from '@backstage/core-plugin-api';
 import useAsyncRetry from 'react-use/esm/useAsyncRetry';
-import { ComputedServerConfig } from '@backstage-community/plugin-kiali-common';
+import { ComputedServerConfig, defaultServerConfig } from '@backstage-community/plugin-kiali-common';
 import { useCallback } from 'react';
 import { kialiApiRef } from '../apiRef';
+import { computeValidDurations, parseHealthConfig } from '../config';
 
 /**
  * Get configuration from Kiali 
@@ -24,9 +25,20 @@ export const useConfig = (): {
       () => getConfig(),
       [getConfig],
     );
-
+    
+    const serverConfig = {
+      ...defaultServerConfig,
+      ...value
+    };
+    serverConfig.healthConfig = value && value.healthConfig ? parseHealthConfig(value.healthConfig) : serverConfig.healthConfig;
+    
+    computeValidDurations(serverConfig);
+    if (!serverConfig.ambientEnabled) {
+      serverConfig.kialiFeatureFlags.uiDefaults.graph.traffic.ambient = 'none';
+    }
+    
     return {
-      config: value,
+      config: serverConfig,
       loading,
       error
     }

@@ -10,7 +10,7 @@ metadata:
     - core
     - servicemesh
   annotations:
-    'backstage.io/kiali-namespace': istio-system
+    'kiali.io/namespace': istio-system
 spec:
   type: service
   lifecycle: production
@@ -27,7 +27,7 @@ metadata:
     - core
     - servicemesh
   annotations:
-    'backstage.io/kiali-namespace': bookinfo
+    'kiali.io/namespace': bookinfo
 spec:
   type: service
   lifecycle: production

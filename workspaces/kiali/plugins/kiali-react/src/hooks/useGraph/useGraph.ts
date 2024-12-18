@@ -171,6 +171,8 @@ const getGraphQuery = (fetchParams: FetchParams, serverConfig: ComputedServerCon
 }
 
 export const useGraph = (entity: Entity, prevGraphData: DecoratedGraphElements, fetchParams: FetchParams,intervalMs: number = 10000): { data: GraphData} => {
+  console.log("Loading Graph")
+  console.log(fetchParams)
   if (fetchParams.namespaces.length === 0) {
     return {data: {
       elements: EMPTY_GRAPH_DATA,
@@ -182,7 +184,6 @@ export const useGraph = (entity: Entity, prevGraphData: DecoratedGraphElements, 
     }}
   }
   const config = useContext(KialiConfig);
-  console.log(config);
   const restParams = getGraphQuery(fetchParams, config)
 
   let cluster: string | undefined;
@@ -195,19 +196,20 @@ export const useGraph = (entity: Entity, prevGraphData: DecoratedGraphElements, 
   // Need to make the request for node
   
   const kialiApi = useApi(kialiApiRef);  
-  const getGraph = useCallback(async (): Promise<GraphDefinition> => {
-    const { namespaces, app, selector } = getAnnotationValuesFromEntity(entity);     
-    restParams.namespaces = namespaces.join(',');    
+  const { namespaces, app, selector } = getAnnotationValuesFromEntity(entity);     
+  restParams.namespaces = namespaces.join(',')
+
+  const getGraph = useCallback(async (): Promise<GraphDefinition> => {        
     const entityRef = stringifyEntityRef(entity);
     const response = await kialiApi.getGraphElements({params: restParams, entityRef: entityRef})      
-    let payload = await response.json();        
+    let payload = await response.json(); 
     return {
         elements: payload.elements? payload.elements : EMPTY_GRAPH_DATA,
         timestamp: payload.timestamp? payload.timestamp : 0,
         duration: payload.duration? payload.duration : 0,
         graphType: fetchParams.graphType      
     }    
-  }, [entity, kialiApi])
+  }, [entity, kialiApi, fetchParams])
 
   const { value, loading, error, retry } = useAsyncRetry(
     () => getGraph(),

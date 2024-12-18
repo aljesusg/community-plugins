@@ -30,6 +30,7 @@ import { supportsGroups } from '../../utils/GraphUtils';
 import { DEGRADED, FAILURE } from '../../types/Health';
 import { BoxByType, ComputedServerConfig, CLUSTER_DEFAULT, EdgeLabelMode, GraphType, Namespace, NodeType, numLabels, Protocol, TrafficRate, UNKNOWN } from '@backstage-community/plugin-kiali-common';
 import { style } from 'typestyle';
+import { TrafficPointGenerator } from './TrafficAnimation/TrafficRendererPF';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -73,6 +74,7 @@ export type NodeData = DecoratedGraphNodeData & {
 };
 
 export type EdgeData = DecoratedGraphEdgeData & {
+  animation?: TrafficPointGenerator;
   endTerminalType: EdgeTerminalType;
   hasSpans?: Span[];
   isFind?: boolean;
@@ -191,9 +193,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
     }
   }
 
-  if (attachments.length > 0) {
-    data.attachments = attachments;
-  }
+  data.attachments = attachments.length > 0 ? attachments : undefined;
 };
 
 const rootIconStyle = style({

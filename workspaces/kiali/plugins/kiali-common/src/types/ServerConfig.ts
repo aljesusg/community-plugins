@@ -28,12 +28,14 @@ interface GraphFindOption {
 }
 
 interface GraphTraffic {
+  ambient: string;
   grpc: string;
   http: string;
   tcp: string;
 }
 
 interface GraphSettings {
+  animation: 'point' | 'dash';
   fontLabel: number;
   minFontBadge: number;
   minFontLabel: number;
@@ -195,6 +197,7 @@ export const defaultServerConfig: ComputedServerConfig = {
         hideOptions: [],
         impl: 'cy',
         settings: {
+          animation: 'point',
           fontLabel: 13,
           minFontBadge: 7,
           minFontLabel: 10,

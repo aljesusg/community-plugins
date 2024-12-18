@@ -1,0 +1,233 @@
+{
+    "accessibleNamespaces": [],
+    "ambientEnabled": false,
+    "authStrategy": "anonymous",
+    "clusters": {
+        "Kubernetes": {
+            "apiEndpoint": "https://10.217.4.1:443",
+            "isKialiHome": true,
+            "kialiInstances": [
+                {
+                    "namespace": "istio-system",
+                    "operatorResource": "kiali-operator/kiali",
+                    "serviceName": "kiali",
+                    "url": "",
+                    "version": "dev"
+                }
+            ],
+            "name": "Kubernetes",
+            "secretName": "",
+            "accessible": true
+        }
+    },
+    "durations": {
+        "60": "1m",
+        "120": "2m",
+        "300": "5m",
+        "600": "10m",
+        "1800": "30m",
+        "3600": "1h",
+        "10800": "3h",
+        "21600": "6h",
+        "43200": "12h",
+        "86400": "1d",
+        "604800": "7d"
+    },
+    "gatewayAPIEnabled": false,
+    "logLevel": "debug",
+    "healthConfig": {
+        "rate": [
+          {
+            "tolerance": [
+              {
+                "code": "5XX",
+                "degraded": 0,
+                "failure": 10,
+                "protocol": "http",
+                "direction": ".*"
+              },
+              {
+                "code": "4XX",
+                "degraded": 10,
+                "failure": 20,
+                "protocol": "http",
+                "direction": ".*"
+              },
+              {
+                "code": "^[1-9]$|^1[0-6]$",
+                "degraded": 0,
+                "failure": 10,
+                "protocol": "grpc",
+                "direction": ".*"
+              },
+              {
+                "code": "^-$",
+                "degraded": 0,
+                "failure": 10,
+                "protocol": "http|grpc",
+                "direction": ".*"
+              }
+            ]
+          },
+          {
+            "tolerance": [
+              {
+                "code": "5XX",
+                "degraded": 0,
+                "failure": 10,
+                "protocol": "http",
+                "direction": ".*"
+              },
+              {
+                "code": "4XX",
+                "degraded": 10,
+                "failure": 20,
+                "protocol": "http",
+                "direction": ".*"
+              },
+              {
+                "code": "^[1-9]$|^1[0-6]$",
+                "degraded": 0,
+                "failure": 10,
+                "protocol": "grpc",
+                "direction": ".*"
+              },
+              {
+                "code": "^-$",
+                "degraded": 0,
+                "failure": 10,
+                "protocol": "http|grpc",
+                "direction": ".*"
+              }
+            ]
+          }
+        ]
+     },
+    "deployment": {},
+    "installationTag": "Kiali Console",
+    "istioAnnotations": {
+        "ambientAnnotation": "ambient.istio.io/redirection",
+        "ambientAnnotationEnabled": "enabled",
+        "istioInjectionAnnotation": "sidecar.istio.io/inject"
+    },
+    "istioCanaryRevision": {
+        "current": "",
+        "upgrade": ""
+    },
+    "istioIdentityDomain": "svc.cluster.local",
+    "istioNamespace": "istio-system",
+    "istioLabels": {
+        "ambientNamespaceLabel": "istio.io/dataplane-mode",
+        "ambientNamespaceLabelValue": "ambient",
+        "ambientWaypointLabel": "gateway.istio.io/managed",
+        "ambientWaypointLabelValue": "istio.io-mesh-controller",
+        "ambientWaypointUseLabel": "istio.io/use-waypoint",
+        "appLabelName": "app",
+        "injectionLabelName": "istio-injection",
+        "injectionLabelRev": "istio.io/rev",
+        "versionLabelName": "version"
+    },
+    "kialiFeatureFlags": {
+        "clustering": {
+            "enable_exec_provider": false
+        },
+        "istioAnnotationAction": true,
+        "istioInjectionAction": true,
+        "istioUpgradeAction": false,
+        "uiDefaults": {
+            "graph": {
+                "findOptions": [
+                    {
+                        "description": "Find: slow edges (> 1s)",
+                        "expression": "rt > 1000"
+                    },
+                    {
+                        "description": "Find: unhealthy nodes",
+                        "expression": "! healthy"
+                    },
+                    {
+                        "description": "Find: unknown nodes",
+                        "expression": "name = unknown"
+                    },
+                    {
+                        "description": "Find: nodes with the 2 top rankings",
+                        "expression": "rank <= 2"
+                    }
+                ],
+                "hideOptions": [
+                    {
+                        "description": "Hide: healthy nodes",
+                        "expression": "healthy"
+                    },
+                    {
+                        "description": "Hide: unknown nodes",
+                        "expression": "name = unknown"
+                    },
+                    {
+                        "description": "Hide: nodes ranked lower than the 2 top rankings",
+                        "expression": "rank > 2"
+                    }
+                ],
+                "impl": "pf",
+                "settings": {
+                    "fontLabel": 13,
+                    "minFontBadge": 7,
+                    "minFontLabel": 10
+                },
+                "traffic": {
+                    "ambient": "none",
+                    "grpc": "requests",
+                    "http": "requests",
+                    "tcp": "sent"
+                }
+            },
+            "i18n": {
+                "language": "en",
+                "showSelector": false
+            },
+            "list": {
+                "includeHealth": true,
+                "includeIstioResources": true,
+                "includeValidations": true,
+                "showIncludeToggles": false
+            },
+            "mesh": {
+                "findOptions": [
+                    {
+                        "description": "Find: unhealthy nodes",
+                        "expression": "! healthy"
+                    }
+                ],
+                "hideOptions": [
+                    {
+                        "description": "Hide: healthy nodes",
+                        "expression": "healthy"
+                    }
+                ]
+            },
+            "metricsPerRefresh": "1m",
+            "metricsInbound": {},
+            "metricsOutbound": {},
+            "refreshInterval": "60s"
+        },
+        "validations": {
+            "ignore": [
+                "KIA1301"
+            ],
+            "SkipWildcardGatewayHosts": false
+        }
+    },
+    "prometheus": {
+        "globalScrapeInterval": 15,
+        "storageTsdbRetention": 1296000
+    },
+    "clusterWideAccess": true,
+    "gatewayAPIClasses": [
+        {
+            "name": "Istio",
+            "className": "istio"
+        }
+    ],
+    "istioConfigMap": "",
+    "istioStatusEnabled": true
+}

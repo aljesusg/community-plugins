@@ -69,7 +69,6 @@ import { KialiConcentricGraph,
   KialiGridGraph,
   KialiBreadthFirstGraph
  } from '../../components/CytoscapeGraph/graphs';
-import { HistoryManager, URLParam } from '../../app/History';
 import { tcpTimerConfig, timerConfig } from '../../components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
 import { supportsGroups } from '../../utils/GraphUtils';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -78,28 +77,15 @@ import { scoreNodes, ScoringCriteria } from '../../components/CytoscapeGraph/Gra
 import { DecoratedGraphElements } from '../../types';
 import { FetchParams } from '../../services/GraphDataSource';
 import { KialiConfig } from '../../hooks';
-import { KialiComponentFactory } from './factories';
+import { stylesComponentFactory } from './components/stylesComponentFactory';
+import { TrafficAnimation } from './TrafficAnimation/TrafficRendererPF';
+import { GraphRefs } from './GraphPagePF';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
-export const FIT_PADDING = 80;
-
-export type GraphRefs = {
-  getController: () => Controller;
-  setSelectedIds: (values: string[]) => void;
-};
-
-export type GraphData = {
-  elements: DecoratedGraphElements;
-  elementsChanged: boolean; // true if current elements differ from previous fetch, can be used as an optimization.
-  errorMessage?: string;
-  fetchParams: FetchParams;
-  isError?: boolean;
-  isLoading: boolean;
-  timestamp: TimeInMilliseconds;
-};
+export const FIT_PADDING = 90;
 
 export enum LayoutName {
   BreadthFirst = 'BreadthFirst',
@@ -151,6 +137,16 @@ export function graphLayout(controller: Controller, layoutType: LayoutType, rese
   controller.getGraph().layout();
 }
 
+export type GraphData = {
+  elements: DecoratedGraphElements;
+  elementsChanged: boolean; // true if current elements differ from previous fetch, can be used as an optimization.
+  errorMessage?: string;
+  fetchParams: FetchParams;
+  isError?: boolean;
+  isLoading: boolean;
+  timestamp: TimeInMilliseconds;
+};
+
 export interface FocusNode {
   id: string;
   isSelected?: boolean;
@@ -182,6 +178,7 @@ const TopologyContent: React.FC<{
   showVirtualServices: boolean;
   toggleLegend?: () => void;
   trace?: JaegerTrace;
+  trafficAnimation: TrafficAnimation;
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   controller,
@@ -207,6 +204,7 @@ const TopologyContent: React.FC<{
   showTrafficAnimation,
   showVirtualServices,
   trace,
+  trafficAnimation,
   toggleLegend,
   updateSummary
 }) => {
@@ -343,11 +341,16 @@ const TopologyContent: React.FC<{
     // world that the graph is ready for external processing (like find/hide)
     if (initialLayout) {
       initialLayout = false;
+
+      if (showTrafficAnimation) {
+        trafficAnimation.start(config);
+      }
+
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
 
     layoutInProgress = undefined;
-  }, [controller, onReady, setSelectedIds]);
+  }, [controller, onReady, setSelectedIds, showTrafficAnimation, trafficAnimation]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -693,52 +696,15 @@ const TopologyContent: React.FC<{
   }, [setDetailsLevel]);
 
   React.useEffect(() => {
-    const edges = controller.getGraph().getEdges();
     if (!showTrafficAnimation) {
-      edges
-        .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
-        .forEach(e => {
-          e.setEdgeAnimationSpeed(EdgeAnimationSpeed.none);
-          e.setEdgeStyle(EdgeStyle.solid);
-        });
+      trafficAnimation.stop(config);
       return;
     }
 
-    timerConfig.resetCalibration();
-    tcpTimerConfig.resetCalibration();
-    // Calibrate animation amplitude
-    edges.forEach(e => {
-      const edgeData = e.getData() as EdgeData;
-      switch (edgeData.protocol) {
-        case Protocol.GRPC:
-          timerConfig.calibrate(edgeData.grpc);
-          break;
-        case Protocol.HTTP:
-          timerConfig.calibrate(edgeData.http);
-          break;
-        case Protocol.TCP:
-          tcpTimerConfig.calibrate(edgeData.tcp);
-          break;
-      }
-    });
-    edges.forEach(e => {
-      const edgeData = e.getData() as EdgeData;
-      switch (edgeData.protocol) {
-        case Protocol.GRPC:
-          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
-          break;
-        case Protocol.HTTP:
-          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.http));
-          break;
-        case Protocol.TCP:
-          e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
-          break;
-      }
-      if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {
-        e.setEdgeStyle(EdgeStyle.dashedMd);
-      }
-    });
-  }, [controller, showTrafficAnimation, updateModelTime]);
+    if (!initialLayout) {
+      trafficAnimation.start(config);
+    }
+  }, [controller, showTrafficAnimation, trafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`TG: layout changed`);
@@ -958,18 +924,18 @@ export const GraphPF: React.FC<{
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
   const [highlighter, setHighlighter] = React.useState<GraphHighlighterPF>();
+  const [trafficAnimation, setTrafficAnimation] = React.useState<TrafficAnimation>();
   // Set up the controller one time
   React.useEffect(() => {
     console.debug('TG: New Controller!');
 
     const c = new Visualization();
-    //c.registerElementFactory(elementFactory);
+    c.registerElementFactory(elementFactory);
     c.registerLayoutFactory(layoutFactory);
-    c.registerComponentFactory(KialiComponentFactory);
-    // To Research
-    c.setFitToScreenOnLayout(true);
+    c.registerComponentFactory(stylesComponentFactory);
     setController(c);
     setHighlighter(new GraphHighlighterPF(c));
+    setTrafficAnimation(new TrafficAnimation(c));
   }, []);
 
   const getLayoutName = (layout: Layout): LayoutName => {
@@ -986,10 +952,7 @@ export const GraphPF: React.FC<{
   };
 
   const setLayoutByName = (layoutName: LayoutName): void => {
-    const layout = getLayoutByName(layoutName);
-    HistoryManager.setParam(URLParam.GRAPH_LAYOUT, layout.name);
-    // TODO: PF graph does have support for namespace box layout, just use dagre
-    HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, KialiDagreGraph.getLayout().name);
+    const layout = getLayoutByName(layoutName);   
     setLayout(layout);
   };
 
@@ -1029,6 +992,7 @@ export const GraphPF: React.FC<{
         showVirtualServices={showVirtualServices}
         trace={trace}
         toggleLegend={toggleLegend}
+        trafficAnimation={trafficAnimation!}
         updateSummary={updateSummary}
       />
     </VisualizationProvider>

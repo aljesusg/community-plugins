@@ -1,4 +1,19 @@
+import _ from 'lodash';
 import { ComputedServerConfig, defaultServerConfig, MeshCluster } from "@backstage-community/plugin-kiali-common";
+
+
+export type Durations = { [key: number]: string };
+
+const toDurations = (tupleArray: [number, string][]): Durations => {
+  const obj: Duration = {};
+  tupleArray.forEach(tuple => {
+    obj[tuple[0]] = tuple[1];
+  });
+  return obj;
+};
+
+export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string): Durations =>
+  _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
 
 const durationsTuples: [number, string][] = [
     [60, '1m'],
@@ -14,6 +29,19 @@ const durationsTuples: [number, string][] = [
     [604800, '7d'],
     [2592000, '30d']
   ];
+
+export const computeValidDurations = (cfg: ComputedServerConfig): void => {
+  const tsdbRetention = cfg.prometheus.storageTsdbRetention;
+  const scrapeInterval = cfg.prometheus.globalScrapeInterval;
+  let filtered = durationsTuples.filter(
+    d => (!tsdbRetention || d[0] <= tsdbRetention!) && (!scrapeInterval || d[0] >= scrapeInterval * 2)
+  );
+  // Make sure we keep at least one item, even if it's silly
+  if (filtered.length === 0) {
+    filtered = [durationsTuples[0]];
+  }
+  cfg.durations = toDurations(filtered);
+};
 
 export const getHomeCluster = (cfg: ComputedServerConfig): MeshCluster | undefined => {
     return Object.values(cfg.clusters).find(cluster => cluster.isKialiHome);

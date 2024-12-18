@@ -6,11 +6,11 @@ import { call } from '../client/call';
 import { graphEndpoint } from '../client/kialiEndpoints';
 
 export const getGraph: (options: RouterOptions, mock?: boolean) => RequestHandler =
-  (options, mock) => async (_, response) => {   
+  (options, mock) => async (req, response) => {   
     if (mock) {
       response.json(graphMock)
     }else {
-      const endpoint = `${graphEndpoint}?namespaces=bookinfo`
+      const endpoint = `${graphEndpoint}?${new URLSearchParams(req.body["params"]).toString()}`
       const respKiali = await call<GraphDefinition>(options, endpoint)
       response.json(respKiali as GraphDefinition);     
     }

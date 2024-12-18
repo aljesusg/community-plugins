@@ -78,3 +78,41 @@ export interface DecoratedGraphElements {
   nodes?: DecoratedGraphNodeWrapper[];
   edges?: DecoratedGraphEdgeWrapper[];
 }
+
+export enum TrafficRate {
+  AMBIENT_TOTAL = 'ambientTotal',
+  AMBIENT_GROUP = 'ambient',
+  AMBIENT_WAYPOINT = 'ambientWaypoint',
+  AMBIENT_ZTUNNEL = 'ambientZtunnel',
+  GRPC_GROUP = 'grpc',
+  GRPC_RECEIVED = 'grpcReceived', // response_messages
+  GRPC_REQUEST = 'grpcRequest',
+  GRPC_SENT = 'grpcSent', // request_messages
+  GRPC_TOTAL = 'grpcTotal', // sent_bytes + received_bytes
+  HTTP_GROUP = 'http',
+  HTTP_REQUEST = 'httpRequest',
+  TCP_GROUP = 'tcp',
+  TCP_RECEIVED = 'tcpReceived', // received_bytes
+  TCP_SENT = 'tcpSent', // sent_bytes
+  TCP_TOTAL = 'tcpTotal' // sent_bytes + received_bytes
+}
+
+export const DefaultTrafficRates: TrafficRate[] = [
+  TrafficRate.AMBIENT_GROUP,
+  TrafficRate.AMBIENT_TOTAL,
+  TrafficRate.GRPC_GROUP,
+  TrafficRate.GRPC_REQUEST,
+  TrafficRate.HTTP_GROUP,
+  TrafficRate.HTTP_REQUEST,
+  TrafficRate.TCP_GROUP,
+  TrafficRate.TCP_SENT
+];
+
+export const isAmbientRate = (rate: TrafficRate): boolean => {
+  return (
+    rate === TrafficRate.AMBIENT_TOTAL ||
+    rate === TrafficRate.AMBIENT_GROUP ||
+    rate === TrafficRate.AMBIENT_WAYPOINT ||
+    rate === TrafficRate.AMBIENT_ZTUNNEL
+  );
+};

@@ -121,7 +121,7 @@ export const calculateErrorRate = (
   config: ComputedServerConfig
 ): { errorRatio: ErrorRatio; config: ToleranceConfig[] } => {
   // Get the first configuration that match with the case
-  const rateAnnotation = new RateHealth(requests.healthAnnotations);
+  const rateAnnotation = new RateHealth(requests.healthAnnotations);  
   const conf = rateAnnotation.toleranceConfig || getRateHealthConfig(ns, name, kind, config).tolerance;
 
   // Get aggregate

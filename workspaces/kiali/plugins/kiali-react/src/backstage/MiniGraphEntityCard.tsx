@@ -29,6 +29,8 @@ import { Card, CardContent, CardHeader, Typography } from '@material-ui/core';
 import { toRangeString } from '../components/Time/Utils';
 import FlexView from 'react-flexview';
 import { EmptyGraphLayout } from '../components/CytoscapeGraph/EmptyGraphLayout';
+import { MiniGraphCardPF } from '../components/GraphPF/MiniGraphCardPF';
+import '@patternfly/patternfly/patternfly.css';
 /**
  * Props for {@link TrafficGraph}.
  *
@@ -36,6 +38,8 @@ import { EmptyGraphLayout } from '../components/CytoscapeGraph/EmptyGraphLayout'
  */
 export interface GraphEntityCardProps {
   entity: Entity;
+  title?: string;
+  hideTimestamp?: boolean;
 }
 /**
  * Graph Style
@@ -152,66 +156,23 @@ export function MiniGraphEntityCard(props: GraphEntityCardProps) {
   if (data.isLoading) {
     console.log("Loading")
   } else {    
-    if (!data.isError) {      
-      console.log(data.elements)      
-      const isEmpty = !(
-        data.elements.nodes && Object.keys(data.elements.nodes).length > 0
-      );
+    if (!data.isError) {     
+      return (
+        <Card>
+
+          <CardContent>
+              <MiniGraphCardPF
+              data={data}
+              hideTimestamp={props.hideTimestamp}
+              title={props.title}
+            /> 
+          </CardContent>
+        </Card>        
+      );     
     } else {
       console.log(data.errorMessage)
     }
   }
 
-  const handleReady = (refs: GraphRefs): void => {
-    setGraphRefs(refs)
-    setIsReady(true)
-  }
-
-  const rangeEnd: TimeInMilliseconds = data.timestamp * 1000;
-  const rangeStart: TimeInMilliseconds = rangeEnd - fetchParams.duration * 1000;
-
-  const intervalTitle =
-    rangeEnd > 0 ? toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' }) : 'Loading';
-
-  return (
-    <Card style={{ marginBottom: 20, height: 500 }}>
-      <CardHeader title="Kiali Graph" />
-      <CardContent style={{marginBottom: '20px'}}>
-        <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>{intervalTitle}</Typography>
-        <div id="pft-graph" style={{ height: '100%' }}>
-          <EmptyGraphLayout
-            elements={data.elements}
-            isLoading={data.isLoading}
-            isError={data.isError!}
-            isMiniGraph={true}
-          >
-            <GraphPF
-                  edgeLabels={graphState.toolbarState.edgeLabels}
-                  edgeMode={EdgeMode.ALL}
-                  graphData={data}
-                  isMiniGraph={true}
-                  layout={KialiDagreGraph.getLayout()} 
-                  onReady={handleReady}
-                  rankBy={[]}
-                  setEdgeMode={(edgeMode: EdgeMode) => setGraphState((previous) => ({...previous, edgeMode}))}
-                  setLayout={(layout: Layout) => setGraphState((previous) => ({...previous, layout}))}
-                  setRankResult={() => {}}
-                  setUpdateTime={(updateTime: TimeInMilliseconds) => setGraphState((previous) => ({...previous, updateTime}))} 
-                  updateSummary={(graphEvent: GraphEvent) => setGraphState((previous) => ({...previous, summaryData: {
-                    isPF: graphEvent.isPF,
-                    summaryTarget: graphEvent.summaryTarget,
-                    summaryType: graphEvent.summaryType
-                  }}))}     
-                  showLegend={false}
-                  showRank={false}
-                  showOutOfMesh={true}
-                  showSecurity={true}
-                  showTrafficAnimation={false}
-                  showVirtualServices={true}
-                />
-          </EmptyGraphLayout>
-        </div>        
-      </CardContent>      
-    </Card>    
-  );
+  
 }
